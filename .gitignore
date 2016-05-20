@@ -1,0 +1,11 @@
+.DS_Store
+/pkg
+/bin
+/hack/glide
+/hack/go2xunit
+/hack/gocov
+/hack/gocov-xml
+/hack/golint
+src/webrtcservice/currencyconverter
+src/webrtcservice/glide.lock
+src/webrtcservice/local.db
