@@ -1,6 +1,6 @@
 # webrtcservice
 
-Exercice: create server service for wevrtc connection initialisation between two peers
+Exercice: create server service for webrtc connection initialisation between two peers
 
 # Status
 
