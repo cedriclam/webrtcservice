@@ -1,6 +1,7 @@
 package client
 
 import (
+	"net"
 	"net/http"
 	"testing"
 
@@ -10,12 +11,13 @@ import (
 var upgrader = websocket.Upgrader{}
 
 func TestClientInit(t *testing.T) {
+	hostPort := net.JoinHostPort(GetLocalIP(), "8060")
 	srv := &fakeServer{T: t}
 	http.HandleFunc("/connect", srv.connect)
-	go http.ListenAndServe("0.0.0.0:8060", nil)
+	go http.ListenAndServe(hostPort, nil)
 
 	client := NewClient("id1")
-	if err := client.Init("0.0.0.0:8060"); err != nil {
+	if err := client.Init(hostPort); err != nil {
 		t.Error("client init error, err:", err)
 	}
 
@@ -40,4 +42,20 @@ func (f fakeServer) connect(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+}
+
+func GetLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback the display it
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }

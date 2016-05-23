@@ -6,6 +6,9 @@
 /hack/gocov
 /hack/gocov-xml
 /hack/golint
-src/webrtcservice/webrtcservice
-src/webrtcservice/glide.lock
-src/webrtcservice/local.db
+/src/webrtcservice/webrtcservice
+/src/webrtcservice/glide.lock
+/src/webrtcservice/local.db
+/src/webrtcservice/vendor/
+/docker/webrtcservice/template
+/docker/webrtcservice/webrtcservice

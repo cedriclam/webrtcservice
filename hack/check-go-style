@@ -1,0 +1,52 @@
+#!/bin/bash
+
+export PATH=$PATH:$(dirname $0)/golint/bin
+export PROJECTNAME="webrtcservice"
+
+readonly gofmt_result=$(mktemp -t gofmt_result_XXX)
+readonly govet_result=$(mktemp -t govet_result_XXX)
+readonly golint_result=$(mktemp -t golint_result_XXX)
+
+trap "rm $gofmt_result $govet_result $golint_result" EXIT
+
+printf "Running gofmt...\n"
+find ./src/$PROJECTNAME \( -path ./src/$PROJECTNAME/vendor -o -path ./hack \) -prune -o -name "*.go" -print0 | xargs -0 gofmt -l -d -e -s > "$gofmt_result"
+
+printf "Running go vet...\n"
+# TODO: Launch go vet on packages rather than on files
+find ./src/$PROJECTNAME \( -path ./src/$PROJECTNAME/vendor -o -path ./hack \) -prune -o -name "*.go" -print0 | xargs -0 -n1 go vet 2> "$govet_result"
+
+printf "Running golint...\n"
+# TODO: Launch golint on packages rather than on files
+find ./src/$PROJECTNAME \( -path ./src/$PROJECTNAME/vendor -o -path ./hack \) -prune -o -name "*.go" -print0 | xargs -0 -n1 golint > "$golint_result"
+
+exit_code=0
+
+if [[ -s "$gofmt_result" ]]; then
+    exit_code=1
+    printf "\n"
+    printf "####################\n"
+    printf "### gofmt errors ###\n"
+    printf "####################\n\n"
+    cat "$gofmt_result"
+fi
+
+if [[ -s "$govet_result" ]]; then
+    exit_code=1
+    printf "\n"
+    printf "#####################\n"
+    printf "### go vet errors ###\n"
+    printf "#####################\n\n"
+    cat "$govet_result"
+fi
+
+if [[ -s "$golint_result" ]]; then
+    exit_code=1
+    printf "\n"
+    printf "#####################\n"
+    printf "### golint errors ###\n"
+    printf "#####################\n\n"
+    cat "$golint_result"
+fi
+
+exit $exit_code

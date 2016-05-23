@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"text/template"
@@ -14,6 +15,7 @@ import (
 // Server aggreate data and method use by the signalisation server
 type Server struct {
 	config   *Config
+	indexTpl *template.Template
 	upgrader *websocket.Upgrader
 	handler  *ConnectionHandler
 }
@@ -32,6 +34,7 @@ func NewServer(c *Config) Interface {
 		config:   c,
 		upgrader: &websocket.Upgrader{},
 		handler:  NewConnectionHandler(),
+		indexTpl: loadIndexTemplate(c.IndexFileName),
 	}
 }
 
@@ -40,8 +43,8 @@ func (s *Server) Serve() error {
 	log.SetFlags(0)
 	http.HandleFunc("/connect", s.connect)
 	http.HandleFunc("/", s.home)
-	log.Println("Server: start on:", s.config.getAddr())
-	log.Fatal(http.ListenAndServe(s.config.getAddr(), nil))
+	fmt.Println("[Server] start on:", s.config.getAddr())
+	glog.Fatal(http.ListenAndServe(s.config.getAddr(), nil))
 	return nil
 }
 
@@ -90,7 +93,7 @@ func handleAction(msg *protocol.Message, h *ConnectionHandler, conn *Connection)
 }
 
 func (s *Server) home(w http.ResponseWriter, r *http.Request) {
-	homeTemplate.Execute(w, "ws://"+r.Host+"/connect")
+	s.indexTpl.ExecuteTemplate(w, "index.html", "ws://"+r.Host+"/connect")
 }
 
 func closeConnection(c *Connection, h *ConnectionHandler) {
@@ -99,88 +102,9 @@ func closeConnection(c *Connection, h *ConnectionHandler) {
 	}
 }
 
-var homeTemplate = template.Must(template.New("").Parse(`
-<!DOCTYPE html>
-<head>
-<meta charset="utf-8">
-<script>  
-window.addEventListener("load", function(evt) {
-    var output = document.getElementById("output");
-    var input = document.getElementById("input");
-    var ws;
-    var print = function(message) {
-        var d = document.createElement("div");
-        d.innerHTML = message;
-        output.appendChild(d);
-    };
-    document.getElementById("open").onclick = function(evt) {
-        if (ws) {
-            return false;
-        }
-        ws = new WebSocket("{{.}}");
-        ws.onopen = function(evt) {
-            print("SEND ID");
-            var msg = {
-                action: 'SETID', 
-                body: client_id.value
-                }
-            ws.send(JSON.stringify(msg, null, '\t'));
-            print("OPEN");
-        }
-        ws.onclose = function(evt) {
-            print("CLOSE");
-            ws = null;
-        }
-        ws.onmessage = function(evt) {
-            print("RECEIVED: " + evt.data);
-        }
-        ws.onerror = function(evt) {
-            print("ERROR: " + evt.data);
-        }
-        return false;
-    };
-    document.getElementById("send").onclick = function(evt) {
-        if (!ws) {
-            return false;
-        }
-        print("SEND: " + input.value);
-        var msg = {
-                action: 'SENDMSG', 
-                from: client_id.value,
-                to: client_to.value,
-                body: input.value
-                }
-        ws.send(JSON.stringify(msg, null, '\t'));
-        return false;
-    };
-    document.getElementById("close").onclick = function(evt) {
-        if (!ws) {
-            return false;
-        }
-        ws.close();
-        return false;
-    };
-});
-</script>
-</head>
-<body>
-<table>
-<tr><td valign="top" width="50%">
-<p>Click "Open" to create a connection to the server, 
-"Send" to send a message to the server and "Close" to close the connection. 
-You can change the message and send multiple times.
-<p>
-<form>
-<label>Your Client ID</label><input id="client_id" type="text" value="">
-<button id="open">Open</button>
-<button id="close">Close</button>
-<p><label>Client ID to connect</label><input id="client_to" type="text" value=""></p>
-<p>Message to send<input id="input" type="text" value="Hello world!"></p>
-<button id="send">Send</button>
-</form>
-</td><td valign="top" width="50%">
-<div id="output"></div>
-</td></tr></table>
-</body>
-</html>
-`))
+func loadIndexTemplate(filename string) *template.Template {
+	tpl, err := template.ParseFiles(filename)
+	return template.Must(tpl, err)
+}
+
+var homeTemplate = template.Must(template.New("").Parse(``))

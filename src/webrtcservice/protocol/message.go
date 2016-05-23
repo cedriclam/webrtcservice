@@ -13,9 +13,9 @@ const (
 // Message represents the protocol message structure
 type Message struct {
 	Action Action
-	From   string `json:",omitempty"`
-	To     string `json:",omitempty"`
-	Body   string `json:",omitempty"`
+	From   string `json:"from,omitempty"`
+	To     string `json:"to,omitempty"`
+	Body   string `json:"body,omitempty"`
 }
 
 // NewMessage returns new Message instance

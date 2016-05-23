@@ -10,19 +10,19 @@ import (
 var (
 	port             int
 	host             string
-	databasePathName string
+	indexTplFilename string
 )
 
 const (
 	defaultPort             = 8080
 	defaultHost             = "0.0.0.0"
-	defaultDatabasePathName = "./local.db"
+	defaultIndexTplFilename = "./src/template/index.html"
 )
 
 func main() {
 	flag.IntVar(&port, "p", defaultPort, "server port")
 	flag.StringVar(&host, "h", defaultHost, "server listen addresse")
-	flag.StringVar(&databasePathName, "db", defaultDatabasePathName, "sqlite db path name")
+	flag.StringVar(&indexTplFilename, "indexTpl", defaultIndexTplFilename, "path to the index.html template")
 
 	flag.Parse()
 
@@ -31,8 +31,9 @@ func main() {
 
 func run() int {
 	config := &server.Config{
-		Port: port,
-		Host: host,
+		Port:          port,
+		Host:          host,
+		IndexFileName: indexTplFilename,
 	}
 
 	srv := server.NewServer(config)

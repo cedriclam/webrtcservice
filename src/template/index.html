@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<head>
+<meta charset="utf-8">
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+<script>  
+window.addEventListener("load", function(evt) {
+    var msg_sent = document.getElementById("msg_sent");
+    var msg_received = document.getElementById("msg_received");
+    var input = document.getElementById("input");
+    var openbtn = document.getElementById("open");
+    var closebtn = document.getElementById("close");
+    var sendbtn = document.getElementById("send");
+    var ws;
+    var print = function(message, element) {
+        var d = document.createElement("li");
+        d.setAttribute("class", "list-group-item");
+        d.innerHTML = message;
+        element.appendChild(d);
+    };
+    var connected = function() {
+        openbtn.setAttribute("class", "btn btn-success");
+        openbtn.setAttribute("disabled", "disabled");
+        openbtn.innerHTML = "connected"
+        closebtn.removeAttribute("disabled");
+        sendbtn.removeAttribute("disabled");
+    }
+    var closed = function() {
+        openbtn.removeAttribute("disabled");
+        openbtn.innerHTML = "connection"
+        openbtn.setAttribute("class", "btn btn-primary");
+        closebtn.setAttribute("disabled", "disabled");
+        sendbtn.setAttribute("disabled", "disabled");
+    }
+    document.getElementById("open").onclick = function(evt) {
+        if (ws) {
+            return false;
+        }
+        ws = new WebSocket("{{.}}");
+        ws.onopen = function(evt) {
+            var msg = {
+                action: 'SETID', 
+                body: client_id.value
+                }
+            ws.send(JSON.stringify(msg, null, '\t'));
+            connected();
+        }
+        ws.onclose = function(evt) {
+            closed()
+            ws = null;
+        }
+        ws.onmessage = function(evt) {
+            var msg = JSON.parse(evt.data);
+            var txt = "from:[" + msg.from + "] msg:[" + msg.body + "]"
+            print(txt, msg_received);
+        }
+        ws.onerror = function(evt) {
+            var msg = JSON.parse(evt.data);
+            var txt = "from:[" + msg.from + "] msg:[" + msg.body + "]"
+            print(txt, msg_received);
+        }
+        return false;
+    };
+    document.getElementById("send").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+       
+        var msg = {
+                action: 'SENDMSG', 
+                from: client_id.value,
+                to: client_to.value,
+                body: input.value
+                }
+        var txt = "to:[" + msg.to + "] msg:[" + msg.body + "]"
+        print(txt, msg_sent);
+        ws.send(JSON.stringify(msg, null, '\t'));
+        return false;
+    };
+    document.getElementById("close").onclick = function(evt) {
+        if (!ws) {
+            return false;
+        }
+        ws.close();
+        close();
+        return false;
+    };
+});
+</script>
+</head>
+<body style="padding:10px">
+<div class="panel panel-primary">
+  <div class="panel-heading">Connection form</div>
+  <div class="panel-body">
+    <form class="form-horizontal" id="formconnection">
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="client_id">Your Client ID:</label>
+            <div class="col-sm-10" class="input-group">
+                <input id="client_id" class="form-control" type="text">
+            </div>
+    </div>
+    <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button id="open" type="submit" class="btn btn-primary">Connection</button>
+                <button id="close" type="submit" class="btn btn-default" disabled="disabled">Close</button>
+            </div>
+        </div>
+        <div class="form-group"> 
+            <label class="col-sm-2 control-label" for="client_to">Client ID to connect:</label>
+            <div class="col-sm-10">
+                <input id="client_to" type="text" class="form-control"></p>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="col-sm-2 control-label" for="input">Message to send:</label>
+            <div class="col-sm-10">
+                <input id="input" type="text" class="form-control" placeholder="message to send">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-sm-offset-2 col-sm-10">
+                <button id="send" type="submit" class="btn btn-default" disabled="disabled">Send</button>
+            </div>
+        </div>
+    </form>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Messages sent</div>
+        <div class="panel-body">
+            <ul class="list-group" id="msg_sent">
+            </ul>
+        </div>
+      </div>
+  </div>
+  <div class="col-md-6">
+      <div class="panel panel-primary">
+        <div class="panel-heading">Messages received</div>
+        <div class="panel-body">
+            <ul class="list-group" id="msg_received">
+            </ul>
+        </div>
+      </div>
+  </div>
+</div>
+
+</body>
+</html>

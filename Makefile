@@ -8,6 +8,7 @@ BINFOLDER := $(ROOT)/bin
 GO := go
 GOPATH := $(ROOT)
 WORKSPACE := $(ROOT)/src/$(PROJECTNAME)
+TEMPLATEPATH := $(ROOT)/src/template
 
 # Hack tools
 GLIDEPATH := $(PWD)/hack/glide
@@ -55,7 +56,7 @@ docker: build-docker ## Build docker images
 
 .PHONY: validate
 validate: $(GOLINT) ## Run go style validation (golint)
-	@hack/check-go-style
+	@cd $(ROOT) && ./hack/check-go-style
 
 reports:
 	@mkdir -p _reports
@@ -86,8 +87,9 @@ build: ## Build rest server binary
 .PHONY: build-docker
 build-docker: ## Build rest server docker image
 	@echo "Building redismanager docker image..."
+	@cp -r $(TEMPLATEPATH) $(DOCKERFOLDER)/$(PROJECTNAME)/template
 	@cd $(WORKSPACE)/ &&\
-	$(COMMONENVVAR) GOOS=linux GOARCH=amd64 CGO_ENABLED=1 $(GO) build \
+	$(COMMONENVVAR) GOOS=linux GOARCH=amd64 CGO_ENABLED=0 $(GO) build \
 	-o $(DOCKERFOLDER)/$(PROJECTNAME)/$(PROJECTNAME) \
 	$(LDFLAGS)
 
@@ -97,7 +99,7 @@ test: ## Run unit-tests
 
 .PHONY: run
 run: ## Run currencyconverter server process
-	@cd $(WORKSPACE)/ && $(COMMONENVVAR) $(GO) run main.go
+	@cd $(WORKSPACE)/ && $(COMMONENVVAR) $(GO) run main.go -indexTpl=$(TEMPLATEPATH)/index.html
 
 
 # Hack targets build

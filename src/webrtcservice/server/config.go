@@ -7,8 +7,9 @@ import (
 
 // Config Server configuration parameters
 type Config struct {
-	Port int
-	Host string
+	Port          int
+	Host          string
+	IndexFileName string
 }
 
 func getPort(port int) string {
