@@ -1,0 +1,4 @@
+package: webrtcservice
+import:
+- package: github.com/gorilla/websocket
+- package: github.com/golang/glog

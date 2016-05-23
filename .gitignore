@@ -6,6 +6,6 @@
 /hack/gocov
 /hack/gocov-xml
 /hack/golint
-src/webrtcservice/currencyconverter
+src/webrtcservice/webrtcservice
 src/webrtcservice/glide.lock
 src/webrtcservice/local.db
